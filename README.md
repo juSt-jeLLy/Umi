@@ -1,4 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Umi Network Meme Platform
+
+## IPFS Configuration
+
+To enable IPFS uploads for memes, you need to set up an Infura IPFS project:
+
+1. Create an account on [Infura](https://infura.io/)
+2. Create a new IPFS project
+3. Get your Project ID and API Secret Key
+4. Create a `.env` file in the root directory with the following variables:
+```env
+NEXT_PUBLIC_IPFS_PROJECT_ID=your_project_id_here
+NEXT_PUBLIC_IPFS_PROJECT_SECRET=your_project_secret_here
+```
 
 ## Getting Started
 
@@ -10,13 +23,17 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
+
+- Connect wallet using MetaMask
+- Create and upload memes to IPFS
+- Add captions and hashtags
+- View meme pool
+- Profile page
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

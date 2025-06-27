@@ -98,25 +98,26 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Initialize wallet connection
-  const initializeWallet = async () => {
+  // Initialize connection state from localStorage
+  const initializeConnection = async () => {
     try {
       if (!window.ethereum) return;
 
+      const savedAddress = localStorage.getItem('walletAddress');
+      if (!savedAddress) return;
+
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      if (accounts.length > 0) {
+      if (accounts && accounts.length > 0 && accounts[0].toLowerCase() === savedAddress.toLowerCase()) {
         const currentAddress = accounts[0];
         const networkSwitched = await checkAndSwitchNetwork();
-        
         if (networkSwitched) {
           setAddress(currentAddress);
           await updateBalance(currentAddress);
           setIsConnected(true);
-          localStorage.setItem('walletConnected', 'true');
         }
       }
     } catch (err) {
-      console.error('Error initializing wallet:', err);
+      console.error('Error initializing connection:', err);
     }
   };
 
@@ -131,63 +132,64 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Please install Rabby Wallet');
       }
 
-      // Request account access
-      const accounts = await window.ethereum.request({ 
+      // Force wallet connection request
+      const accounts = await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      }).then(() => window.ethereum?.request({ 
         method: 'eth_requestAccounts'
-      });
+      }));
       
-      if (accounts.length > 0) {
+      if (accounts && accounts.length > 0) {
         const currentAddress = accounts[0];
-        const networkSwitched = await checkAndSwitchNetwork();
         
-        if (networkSwitched) {
-          setAddress(currentAddress);
-          await updateBalance(currentAddress);
-          setIsConnected(true);
-          localStorage.setItem('walletConnected', 'true');
+        // Ensure we're on the right network
+        const networkSwitched = await checkAndSwitchNetwork();
+        if (!networkSwitched) {
+          throw new Error('Failed to switch to Umi network');
         }
+
+        await updateBalance(currentAddress);
+        setAddress(currentAddress);
+        setIsConnected(true);
+        
+        // Save the connection state
+        localStorage.setItem('walletAddress', currentAddress);
       }
     } catch (err: any) {
       console.error('Error connecting wallet:', err);
       setError(err.message || 'Failed to connect wallet');
-      localStorage.removeItem('walletConnected');
       setIsConnected(false);
       setAddress(null);
       setBalance(null);
+      localStorage.removeItem('walletAddress');
     } finally {
       setIsConnecting(false);
     }
   };
 
   const disconnect = () => {
-    // Clear all connection state
     setIsConnected(false);
     setAddress(null);
     setBalance(null);
     setError(null);
-    
-    // Clear any cached permissions or connections
-    localStorage.removeItem('walletConnected');
+    localStorage.removeItem('walletAddress');
   };
 
-  // Initialize wallet on mount and handle connection persistence
+  // Initialize connection and set up event listeners
   useEffect(() => {
-    const wasConnected = localStorage.getItem('walletConnected') === 'true';
-    if (wasConnected) {
-      initializeWallet();
-    }
-  }, []);
+    initializeConnection();
 
-  // Set up event listeners
-  useEffect(() => {
     if (window.ethereum) {
       // Handle account changes
       window.ethereum.on('accountsChanged', async (accounts: string[]) => {
         if (accounts.length === 0) {
           disconnect();
         } else {
-          setAddress(accounts[0]);
-          await updateBalance(accounts[0]);
+          const newAddress = accounts[0];
+          setAddress(newAddress);
+          localStorage.setItem('walletAddress', newAddress);
+          await updateBalance(newAddress);
         }
       });
 
