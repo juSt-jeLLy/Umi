@@ -1,8 +1,7 @@
 import { cookieStorage, createStorage } from '@wagmi/core'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { mainnet } from '@reown/appkit/networks'
-import { createPublicClient, http, type Chain } from 'viem'
-import { type AppKitNetwork } from '@reown/appkit'
+import { createConfig, http } from 'wagmi'
+import { mainnet } from 'wagmi/chains'
+import { type Chain } from 'viem'
 
 export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
 
@@ -14,7 +13,6 @@ if (!projectId) {
 export const umiDevnet = {
   id: 42069,
   name: 'Umi Devnet',
-  network: 'umi-devnet',
   nativeCurrency: {
     decimals: 18,
     name: 'ETH',
@@ -42,23 +40,14 @@ export const umiDevnet = {
   }
 } as const satisfies Chain
 
-// Create public client for Umi Devnet
-export const publicClient = createPublicClient({
-  chain: umiDevnet,
-  transport: http()
-})
-
-// Set up networks array with Umi Devnet as primary
-export const networks = [umiDevnet, mainnet] as [AppKitNetwork, ...AppKitNetwork[]]
-
-//Set up the Wagmi Adapter (Config)
-export const wagmiAdapter = new WagmiAdapter({
+// Create wagmi config
+export const config = createConfig({
+  chains: [umiDevnet, mainnet],
+  transports: {
+    [umiDevnet.id]: http(),
+    [mainnet.id]: http(),
+  },
   storage: createStorage({
-    storage: cookieStorage
+    storage: cookieStorage,
   }),
-  ssr: true,
-  projectId,
-  networks
-})
-
-export const config = wagmiAdapter.wagmiConfig 
+}) 

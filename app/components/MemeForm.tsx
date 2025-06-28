@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useWallet } from '@/context';
 import { toast, Toaster } from 'react-hot-toast';
+import { submitMeme } from '../utils/contract';
 
 interface MemeFormData {
   image: File | null;
@@ -134,8 +135,11 @@ export default function MemeForm() {
       const hash = await uploadToIPFS(formData.image, formData.caption, formData.hashtags);
       setCidHash(hash);
       
-      toast.success('Meme uploaded successfully!');
-      console.log('IPFS Hash:', hash);
+      // Submit to smart contract
+      const receipt = await submitMeme(hash);
+      console.log('Transaction receipt:', receipt);
+      
+      toast.success('Meme uploaded and submitted to contract successfully!');
       
       // Reset form after successful submission
       setFormData({ image: null, caption: '', hashtags: [] });

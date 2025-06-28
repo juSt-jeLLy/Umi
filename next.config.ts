@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
         hostname: 'placekitten.com',
       },
     ],
+    domains: ['gateway.pinata.cloud'],
   },
 };
 
